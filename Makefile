@@ -1,6 +1,6 @@
 CC=gcc
-CFLAGS=-c -Wall -std=c99
-LDFLAGS=
+CFLAGS=-c -g -Wall -std=c99
+LDFLAGS= -lGL -lGLU -lglut
 SOURCES=main.c
 OBJECTS=$(SOURCES:.c=.o)
 EXECUTABLE=StlReader
