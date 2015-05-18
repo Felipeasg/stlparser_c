@@ -10,6 +10,7 @@
 #include <stdlib.h>
 #include <stdint.h>
 #include <float.h>
+#include <math.h>
 
 #include <GL/gl.h>
 #include <GL/glut.h>
@@ -18,6 +19,9 @@
 #define MAX_OF_CHAR_IN_ONE_LINE	 	100
 
 #define VERBOSE	0
+
+#define MIN(a,b) (((a)<(b))?(a):(b))
+#define MAX(a,b) (((a)>(b))?(a):(b))
 
 typedef struct _Vertex{
 	float x;
@@ -51,6 +55,8 @@ GLfloat ymin = FLT_MAX;
 GLfloat zmax = FLT_MIN;
 GLfloat zmin = FLT_MAX;
 
+GLfloat zoomfactor = 1000;
+
 // Inicializa parâmetros de rendering
 void Initialize (void)
 {
@@ -71,13 +77,19 @@ void resize(GLsizei w, GLsizei h)
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 
-	// Estabelece a janela de seleção (left, right, bottom, top)
-//	if (w <= h)
-//		gluOrtho2D (-0.5f, 0.5f, -0.5f, 0.5*h/w);
-//	else
-//		gluOrtho2D (-0.5f, 0.5*w/h, -0.5f, 0.5f);
 
-	gluOrtho2D(xmin*1.1, xmax*1.1, ymin*1.1, ymax*1.1);
+	if(w < h)
+	{
+		glOrtho(-zoomfactor, zoomfactor, -zoomfactor*(h/w),
+				zoomfactor*h/w, -zoomfactor*5000.0f, zoomfactor*5000);
+	}
+	else
+	{
+		glOrtho(-zoomfactor*w/h, zoomfactor*w/h,
+		            -zoomfactor, zoomfactor, -zoomfactor*5000.0f, zoomfactor*5000.0f);
+	}
+
+
 }
 
 
@@ -292,24 +304,28 @@ int main(int argc, char* argv[])
 	printf("Ymax = %f, Ymin = %f\n", ymax, ymin);
 	printf("Zmax = %f, Zmin = %f\n", zmax, zmin);
 
-//	for(int i = 0; i < stl.numberOfFacets; i++)
-//	{
-//		printf("normal[%lf %lf %f]\n",stl.facet[i].normal.x,
-//				stl.facet[i].normal.y,
-//				stl.facet[i].normal.z);
-//
-//		printf(" v1[%lf %lf %f]\n",stl.facet[i].v1.x,
-//				stl.facet[i].v1.y,
-//				stl.facet[i].v1.z);
-//
-//		printf(" v2[%lf %lf %f]\n",stl.facet[i].v2.x,
-//				stl.facet[i].v2.y,
-//				stl.facet[i].v3.z);
-//
-//		printf(" v3[%lf %lf %f]\n",stl.facet[i].v3.x,
-//				stl.facet[i].v3.y,
-//				stl.facet[i].v3.z);
-//	}
+	zoomfactor = MAX(MAX(fabs(xmax-xmin), fabs(ymax-ymin)),fabs(zmax-zmin));
+
+#if 0
+	for(int i = 0; i < stl.numberOfFacets; i++)
+	{
+		printf("normal[%lf %lf %f]\n",stl.facet[i].normal.x,
+				stl.facet[i].normal.y,
+				stl.facet[i].normal.z);
+
+		printf(" v1[%lf %lf %f]\n",stl.facet[i].v1.x,
+				stl.facet[i].v1.y,
+				stl.facet[i].v1.z);
+
+		printf(" v2[%lf %lf %f]\n",stl.facet[i].v2.x,
+				stl.facet[i].v2.y,
+				stl.facet[i].v3.z);
+
+		printf(" v3[%lf %lf %f]\n",stl.facet[i].v3.x,
+				stl.facet[i].v3.y,
+				stl.facet[i].v3.z);
+	}
+#endif
 
 	argv = NULL;
 	argc = 0;
@@ -326,3 +342,41 @@ int main(int argc, char* argv[])
 
 	return 0;
 }
+
+#if 0
+#include <stdio.h>
+#include <string.h>
+#include <assert.h>
+#include <stdint.h>
+
+
+ #define p_ntohl(u) ({const uint32_t Q=0xFF000000;       \
+                     uint32_t S=(uint32_t)(u);           \
+                   (*(uint8_t*)&Q)?S:                    \
+                   ( (S<<24)|                            \
+                     ((S<<8)&0x00FF0000)|                \
+                     ((S>>8)&0x0000FF00)|                \
+                     ((S>>24)&0xFF) );  })
+
+main (void)
+{
+    uint32_t s[0x40];
+    assert((unsigned char)1 == (unsigned char)(257));
+    memset(s, 0, sizeof(s));
+    fgets((char*)s, sizeof(s), stdin);
+
+    switch (p_ntohl(s[0])) {
+        case 'open':
+        case 'read':
+        case 'seek':
+            puts("ok");
+            break;
+        case 'rm\n\0':
+            puts("not authorized");
+            break;
+        default:
+            puts("unrecognized command");
+    }
+    return 0;
+}
+#endif
