@@ -57,6 +57,10 @@ GLfloat zmin = FLT_MAX;
 
 GLfloat zoomfactor = 1000;
 
+GLfloat xTrans, yTrans, zTrans;
+
+GLint xRot, yRot, zRot;
+
 // Inicializa parâmetros de rendering
 void Initialize (void)
 {
@@ -86,35 +90,42 @@ void resize(GLsizei w, GLsizei h)
 	else
 	{
 		glOrtho(-zoomfactor*w/h, zoomfactor*w/h,
-		            -zoomfactor, zoomfactor, -zoomfactor*5000.0f, zoomfactor*5000.0f);
+				-zoomfactor, zoomfactor, -zoomfactor*5000.0f, zoomfactor*5000.0f);
 	}
-
-
 }
 
 
 // Função callback chamada para fazer o desenho
 void Draw(void)
 {
-	glMatrixMode(GL_MODELVIEW);
+
+
+	glMatrixMode(GL_MODELVIEW);;
 	glLoadIdentity();
 
 	// Limpa a janela de visualização com a cor de fundo especificada
-	glClear(GL_COLOR_BUFFER_BIT);
+//	glClear(GL_COLOR_BUFFER_BIT);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	glEnable(GL_DEPTH_TEST);
+	glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+
+	glRotated(xRot / 16.0, 1.0, 0.0, 0.0);
+	glRotated(yRot / 16.0, 0.0, 1.0, 0.0);
+	glRotated(zRot / 16.0, 0.0, 0.0, 1.0);
 
 	// Especifica que a cor corrente é vermelha
 	//         R     G     B
-	glColor3f(1.0f, 0.0f, 0.0f);
+	glColor3f(0.3f, 0.6f, 0.45f);
 
 	// Desenha um quadrado preenchido com a cor corrente
 	glBegin(GL_TRIANGLES);
 	for(int i = 0; i < stl.numberOfFacets; i++)
 	{
-		glNormal3f(stl.facet[i].normal.x, stl.facet[i].normal.y, stl.facet[i].normal.y);
+		glNormal3f(stl.facet[i].normal.x, stl.facet[i].normal.y, stl.facet[i].normal.z);
 
-		glVertex3f(stl.facet[i].v1.x, stl.facet[i].v1.y, stl.facet[i].v1.y);
-		glVertex3f(stl.facet[i].v2.x, stl.facet[i].v2.y, stl.facet[i].v2.y);
-		glVertex3f(stl.facet[i].v3.x, stl.facet[i].v3.y, stl.facet[i].v3.y);
+		glVertex3f(stl.facet[i].v1.x, stl.facet[i].v1.y, stl.facet[i].v1.z);
+		glVertex3f(stl.facet[i].v2.x, stl.facet[i].v2.y, stl.facet[i].v2.z);
+		glVertex3f(stl.facet[i].v3.x, stl.facet[i].v3.y, stl.facet[i].v3.z);
 	}
 	glEnd();
 
@@ -122,6 +133,56 @@ void Draw(void)
 	glFlush();
 }
 
+void normalizeAngle(int *angle)
+{
+	while(*angle < 0)
+	{
+		*angle += 360 * 16;
+	}
+	while(*angle > 360 * 16)
+	{
+		*angle -= 360 * 16;
+	}
+}
+
+void setXRotation(int angle)
+{
+	normalizeAngle(&angle);
+	if(angle != xRot)
+	{
+		xRot = angle;
+	}
+}
+
+void setZRotation(int angle)
+{
+	normalizeAngle(&angle);
+	if(angle != zRot)
+	{
+		zRot = angle;
+	}
+}
+
+void mouseEvent(int x, int y)
+{
+	static int lastx, lasty;
+
+	int dx = x - lastx;
+	int dy = y - lasty;
+
+
+
+	setXRotation(xRot + 8 * dy);
+	setZRotation(zRot + 8 * dx);
+
+	printf("x = %d, y = %d\n", x, y);
+	printf("xRot = %d, yRot = %d\n", xRot, zRot);
+
+	lastx = x;
+	lasty = y;
+
+	glutPostRedisplay();
+}
 
 
 int parseSTLFile(const char* filename, STL* stl)
@@ -335,10 +396,9 @@ int main(int argc, char* argv[])
 	glutCreateWindow("STL Parser");
 	glutDisplayFunc(Draw);
 	glutReshapeFunc(resize);
+	glutMotionFunc(mouseEvent);
 	Initialize();
 	glutMainLoop();
-
-
 
 	return 0;
 }
@@ -350,33 +410,33 @@ int main(int argc, char* argv[])
 #include <stdint.h>
 
 
- #define p_ntohl(u) ({const uint32_t Q=0xFF000000;       \
-                     uint32_t S=(uint32_t)(u);           \
-                   (*(uint8_t*)&Q)?S:                    \
-                   ( (S<<24)|                            \
-                     ((S<<8)&0x00FF0000)|                \
-                     ((S>>8)&0x0000FF00)|                \
-                     ((S>>24)&0xFF) );  })
+#define p_ntohl(u) ({const uint32_t Q=0xFF000000;       \
+		uint32_t S=(uint32_t)(u);           \
+		(*(uint8_t*)&Q)?S:                    \
+				( (S<<24)|                            \
+						((S<<8)&0x00FF0000)|                \
+						((S>>8)&0x0000FF00)|                \
+						((S>>24)&0xFF) );  })
 
 main (void)
 {
-    uint32_t s[0x40];
-    assert((unsigned char)1 == (unsigned char)(257));
-    memset(s, 0, sizeof(s));
-    fgets((char*)s, sizeof(s), stdin);
+	uint32_t s[0x40];
+	assert((unsigned char)1 == (unsigned char)(257));
+	memset(s, 0, sizeof(s));
+	fgets((char*)s, sizeof(s), stdin);
 
-    switch (p_ntohl(s[0])) {
-        case 'open':
-        case 'read':
-        case 'seek':
-            puts("ok");
-            break;
-        case 'rm\n\0':
-            puts("not authorized");
-            break;
-        default:
-            puts("unrecognized command");
-    }
-    return 0;
+	switch (p_ntohl(s[0])) {
+	case 'open':
+	case 'read':
+	case 'seek':
+		puts("ok");
+		break;
+	case 'rm\n\0':
+		puts("not authorized");
+		break;
+	default:
+		puts("unrecognized command");
+	}
+	return 0;
 }
 #endif
