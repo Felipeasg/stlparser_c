@@ -23,6 +23,8 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
+
+
 typedef struct _Vertex{
 	float x;
 	float y;
@@ -170,13 +172,8 @@ void mouseEvent(int x, int y)
 	int dx = x - lastx;
 	int dy = y - lasty;
 
-
-
 	setXRotation(xRot + 8 * dy);
 	setZRotation(zRot + 8 * dx);
-
-	printf("x = %d, y = %d\n", x, y);
-	printf("xRot = %d, yRot = %d\n", xRot, zRot);
 
 	lastx = x;
 	lasty = y;
@@ -403,40 +400,4 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-#if 0
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include <stdint.h>
 
-
-#define p_ntohl(u) ({const uint32_t Q=0xFF000000;       \
-		uint32_t S=(uint32_t)(u);           \
-		(*(uint8_t*)&Q)?S:                    \
-				( (S<<24)|                            \
-						((S<<8)&0x00FF0000)|                \
-						((S>>8)&0x0000FF00)|                \
-						((S>>24)&0xFF) );  })
-
-main (void)
-{
-	uint32_t s[0x40];
-	assert((unsigned char)1 == (unsigned char)(257));
-	memset(s, 0, sizeof(s));
-	fgets((char*)s, sizeof(s), stdin);
-
-	switch (p_ntohl(s[0])) {
-	case 'open':
-	case 'read':
-	case 'seek':
-		puts("ok");
-		break;
-	case 'rm\n\0':
-		puts("not authorized");
-		break;
-	default:
-		puts("unrecognized command");
-	}
-	return 0;
-}
-#endif
