@@ -23,7 +23,11 @@
 #define MIN(a,b) (((a)<(b))?(a):(b))
 #define MAX(a,b) (((a)>(b))?(a):(b))
 
-
+#define RIGHT_BUTTON 	0
+#define MIDDLE_BUTTON	1
+#define LEFT_BUTTON	2
+#define WHELL_FORWARD	3
+#define WHEL_BACKWARD	4
 
 typedef struct _Vertex{
 	float x;
@@ -63,11 +67,26 @@ GLfloat xTrans, yTrans, zTrans;
 
 GLint xRot, yRot, zRot;
 
+int rigthButtonPressed = 0;
+int lastx=0, lasty=0;
+
+int wireframeMode = 0;
+
 // Inicializa parâmetros de rendering
 void Initialize (void)
 {
 	// Define a cor de fundo da janela de visualização como preta
 	glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
+
+	glEnable(GL_MULTISAMPLE);
+
+	glEnable(GL_DEPTH_TEST);
+	glEnable(GL_LIGHTING);
+	glEnable(GL_LIGHT0);
+	
+	glEnable(GL_COLOR_MATERIAL);
+
+	glColorMaterial(GL_FRONT_AND_BACK, GL_AMBIENT_AND_DIFFUSE);
 }
 
 // Função callback chamada quando o tamanho da janela é alterado
@@ -114,6 +133,17 @@ void Draw(void)
 	glRotated(xRot / 16.0, 1.0, 0.0, 0.0);
 	glRotated(yRot / 16.0, 0.0, 1.0, 0.0);
 	glRotated(zRot / 16.0, 0.0, 0.0, 1.0);
+
+	if(!wireframeMode)
+        {
+            //glPolygonMode(GL_BACK, GL_FILL);
+            glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
+        }
+        else
+        {
+            glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+        }
+        glCullFace(GL_BACK);
 
 	// Especifica que a cor corrente é vermelha
 	//         R     G     B
@@ -167,20 +197,58 @@ void setZRotation(int angle)
 
 void mouseEvent(int x, int y)
 {
-	static int lastx, lasty;
-
 	int dx = x - lastx;
 	int dy = y - lasty;
 
-	setXRotation(xRot + 8 * dy);
-	setZRotation(zRot + 8 * dx);
+	if(rigthButtonPressed == 1)
+	{
 
+			
+
+		setXRotation(xRot + 8 * dy);
+		setZRotation(zRot + 8 * dx);
+
+
+		glutPostRedisplay();
+	}
+ 	lastx = x;
+	lasty = y;
+
+}
+
+void mouseClickEvent(int button, int state, int x, int y)
+{
+	//printf("Mouse click\n");
+	//printf("Button %d\n", button);
+	//printf("State %d\n\n", state);
+	
 	lastx = x;
 	lasty = y;
 
-	glutPostRedisplay();
+	
+	if(button == RIGHT_BUTTON  && state == 1)
+	{
+		rigthButtonPressed = 0;
+	}
+	if(button == RIGHT_BUTTON  && state == 0)
+	{
+		rigthButtonPressed = 1;
+	}
 }
 
+void keyBoardEvent(unsigned char key, int x, int y)
+{
+	if(key == 'w')
+	{
+		wireframeMode = 1;
+	}
+	if(key == 'f')
+	{
+		wireframeMode = 0;
+	}
+	
+	glutPostRedisplay();
+}
 
 int parseSTLFile(const char* filename, STL* stl)
 {
@@ -393,7 +461,9 @@ int main(int argc, char* argv[])
 	glutCreateWindow("STL Parser");
 	glutDisplayFunc(Draw);
 	glutReshapeFunc(resize);
+	glutMouseFunc(mouseClickEvent);
 	glutMotionFunc(mouseEvent);
+	glutKeyboardFunc(keyBoardEvent);
 	Initialize();
 	glutMainLoop();
 
