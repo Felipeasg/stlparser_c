@@ -12,7 +12,7 @@ $ make
 
 To run the program just type:
 
-$./StlReader <stlfile.stl>
+$./StlReader sphmms128.stl
 
 to show the wireframes type [W] and [F] to fill.
 
